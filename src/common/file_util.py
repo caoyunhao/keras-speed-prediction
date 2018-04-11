@@ -41,7 +41,8 @@ def read_image(filename):
 
 
 def _test():
-    print(read_text('./test.txt'))
+    # print(read_text('./test.txt'))
+    print(read_image('./test.png').shape)
 
 
 if __name__ == '__main__':

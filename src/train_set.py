@@ -3,6 +3,8 @@
 # @Time    : 2018/4/6 10:55
 # @Author  : Yunhao Cao
 # @File    : train_set.py
+import cv2
+
 from src.common import dir_util, file_util, data_util
 
 __author__ = 'Yunhao Cao'
@@ -37,12 +39,19 @@ SET_NUMS = [
 
 rate = 0.8
 
+ORIGIN_TRAIN_SHAPE = (375, 1242, 3)
+CUT_SHAPE = (300, 1200, 3)  # 1：4
+TRAIN_SHAPE = (30, 120, 3)  # 1：4
+
 
 def get_set(i):
     images_dir = dir_util.train_set_images(i)
     tmp_list = list()
     for filename in file_util.get_all(images_dir):
         data = file_util.read_image(filename)
+        data = data_util.ArrayCut(data, CUT_SHAPE[:2], mode=8)
+        data = cv2.resize(data, (TRAIN_SHAPE[1], TRAIN_SHAPE[0]), interpolation=cv2.INTER_CUBIC)
+
         tmp_list.append(data)
 
     return data_util.Array(tmp_list)
