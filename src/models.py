@@ -49,3 +49,18 @@ def CNN(input_shape, data_format, num_classes):
     model.add(Dense(num_classes, activation='softmax'))
 
     return model
+
+
+def CapsNet(input_shape, data_format, num_classes):
+    model = Sequential()
+
+    model.add(Conv2D(256, (9, 9), padding='same',
+                     input_shape=input_shape,
+                     data_format=data_format,
+                     activation='relu'))
+    model.add(Conv2D(256, (9, 9), activation='relu'))
+    model.add(Flatten())
+    model.add(Dense(512, activation='relu'))
+    model.add(Dense(num_classes, activation='softmax'))
+
+    return model

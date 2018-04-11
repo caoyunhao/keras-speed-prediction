@@ -5,6 +5,8 @@
 # @File    : train.py
 import os
 import sys
+import time
+
 import keras
 from keras.optimizers import RMSprop
 
@@ -19,14 +21,25 @@ __all__ = [
     '',
 ]
 
-batch_size = 128
+batch_size = 120
 num_classes = train_set.NUM_OF_LEVEL
 epochs = 20
 # (86, 375, 1242, 3)
-img_width = 375
-img_height = 1242
+img_width, img_height = train_set.TRAIN_SHAPE[:2]
 
-model_name = os.path.join('.', 'model.h5')
+
+def save(model):
+    saved_path = os.path.join(
+        '.',
+        'saved_model',
+        time.strftime("%Y%m%d_%H%M%S", time.localtime(int(time.time()))),
+    )
+
+    model_name = os.path.join(saved_path, 'model.h5')
+
+    if not os.path.exists(saved_path):
+        os.makedirs(saved_path)
+    model.save(model_name)
 
 
 def _main():
@@ -41,7 +54,7 @@ def _main():
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
 
-    model = models.CNN(input_shape=(img_width, img_height, 3), num_classes=num_classes, data_format='channels_last')
+    model = models.CapsNet(input_shape=(img_width, img_height, 3), num_classes=num_classes, data_format='channels_last')
 
     model.summary()
 
@@ -54,8 +67,7 @@ def _main():
                         epochs=epochs,
                         verbose=1,
                         validation_data=(x_test, y_test))
-
-    model.save(model_name)
+    save(model)
 
     score = model.evaluate(x_test, y_test, verbose=0)
 
