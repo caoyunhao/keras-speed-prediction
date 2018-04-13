@@ -4,6 +4,7 @@
 # @Author  : Yunhao Cao
 # @File    : train_set.py
 import cv2
+# from keras.preprocessing.image import ImageDataGenerator
 
 from src.common import dir_util, file_util, data_util
 
@@ -35,13 +36,17 @@ SET_NUMS = [
     '0005',
     '0009',
     '0011',
+    '0013',
 ]
 
 rate = 0.8
 
 ORIGIN_TRAIN_SHAPE = (375, 1242, 3)
-CUT_SHAPE = (300, 1200, 3)  # 1：4
-TRAIN_SHAPE = (30, 120, 3)  # 1：4
+CUT_SHAPE_0 = (300, 1200, 3)  # 1：4
+CUT_SHAPE_1 = (30, 120, 3)  # 1：4
+CUT_SHAPE_2 = (75, 300, 3)  # 1：4
+
+TRAIN_SHAPE = CUT_SHAPE_2
 
 
 def get_set(i):
@@ -49,7 +54,7 @@ def get_set(i):
     tmp_list = list()
     for filename in file_util.get_all(images_dir):
         data = file_util.read_image(filename)
-        data = data_util.ArrayCut(data, CUT_SHAPE[:2], mode=8)
+        data = data_util.ArrayCut(data, CUT_SHAPE_0[:2], mode=8)
         data = cv2.resize(data, (TRAIN_SHAPE[1], TRAIN_SHAPE[0]), interpolation=cv2.INTER_CUBIC)
 
         tmp_list.append(data)
@@ -58,7 +63,7 @@ def get_set(i):
 
 
 def get_flag(i):
-    sync_file = dir_util.sync_fullname(i)
+    sync_file = dir_util.origin_sync_fullname(i)
     lines = file_util.read_text(sync_file)
 
     return data_util.Array(lines)
@@ -66,6 +71,13 @@ def get_flag(i):
 
 def load_data(i):
     return data_util.ArraySplit(get_set(i), rate), data_util.ArraySplit(get_flag(i), rate)
+
+
+def set_generator():
+    # g = ImageDataGenerator()
+
+    pass
+    # g.flow_from_directory()
 
 
 def _test():

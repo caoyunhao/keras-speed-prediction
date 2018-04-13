@@ -1,0 +1,5 @@
+tensorflow
+keras
+opencv-python
+h5py
+pillow

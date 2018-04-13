@@ -10,10 +10,11 @@ __author__ = 'Yunhao Cao'
 
 __all__ = [
     'CNN',
+    'CapsNet',
 ]
 
 
-def CNN(input_shape, data_format, num_classes):
+def CNN(input_shape, num_classes):
     """
     user-defined CNN model
     :param input_shape:
@@ -25,7 +26,6 @@ def CNN(input_shape, data_format, num_classes):
 
     model.add(Conv2D(32, (3, 3), padding='same',
                      input_shape=input_shape,
-                     data_format=data_format,
                      activation='relu'))
     model.add(Conv2D(32, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -51,12 +51,11 @@ def CNN(input_shape, data_format, num_classes):
     return model
 
 
-def CapsNet(input_shape, data_format, num_classes):
+def CapsNet(input_shape, num_classes):
     model = Sequential()
 
     model.add(Conv2D(256, (9, 9), padding='same',
                      input_shape=input_shape,
-                     data_format=data_format,
                      activation='relu'))
     model.add(Conv2D(256, (9, 9), activation='relu'))
     model.add(Flatten())

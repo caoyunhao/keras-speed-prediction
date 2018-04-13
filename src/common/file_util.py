@@ -19,9 +19,7 @@ __all__ = [
 
 
 def get_all(dir_: str) -> list:
-    if not dir_.endswith("/"):
-        dir_ = dir_ + '/'
-    return ["{}{}".format(dir_, name) for name in os.listdir(dir_)]
+    return [os.path.join(dir_, name) for name in os.listdir(dir_)]
 
 
 def read_text(filename):
@@ -35,9 +33,15 @@ def write_text(filename, lines, end='\n'):
 
 
 def read_image(filename):
-    data = cv2.imread(filename)
-    data.astype("float32")
-    return data / 255
+    return cv2.imread(filename)
+
+
+def image_cut(data, shape):
+    return cv2.resize(data, shape, interpolation=cv2.INTER_CUBIC)
+
+
+def image_save(filename, data):
+    cv2.imwrite(filename, data)
 
 
 def _test():
