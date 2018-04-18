@@ -3,21 +3,20 @@
 # @Time    : 2018/4/5 11:31
 # @Author  : Yunhao Cao
 # @File    : train.py
+import codecs
+import json
 import os
-import sys
 import time
 
-import keras
-from keras.callbacks import ModelCheckpoint
-from keras.optimizers import RMSprop
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from keras.layers import Dense, Dropout, Flatten, Conv2D
+from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
-from keras import backend as K
+from keras import backend as K, Input, Model
+import tensorflow as tf
+import numpy as np
 
-sys.path.append(os.path.abspath(os.path.join(os.getcwd(), '..')))
-
-from src.common import dir_util
-from src import train_set
-from src import models
+import config
 
 __author__ = 'Yunhao Cao'
 
@@ -25,11 +24,26 @@ __all__ = [
     '',
 ]
 
-batch_size = 12
-num_classes = train_set.NUM_OF_LEVEL
-epochs = 20
-# (86, 375, 1242, 3)
-img_width, img_height = train_set.TRAIN_SHAPE[:2]
+# Train config
+batch_size = config.batch_size
+epochs = config.epochs
+
+# config
+TRAINSET_DIR = config.TRAINSET_DIR
+VALIDATION_DIR = config.VALIDATION_DIR
+TRAIN_SHAPE = config.TRAIN_SHAPE
+
+num_classes = config.NUM_OF_LEVEL
+img_width, img_height = TRAIN_SHAPE[:2]
+
+# #########################
+# output config
+start_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(int(time.time())))
+saved_path = os.path.join('.', 'saved_model', start_time)
+model_name = os.path.join(saved_path, 'model.hdf5')
+history_name = os.path.join(saved_path, 'history.json')
+
+os.makedirs(saved_path)
 
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
@@ -37,34 +51,48 @@ else:
     input_shape = (img_width, img_height, 3)
 
 
-def get_timestamp():
-    return time.strftime("%Y%m%d_%H%M%S", time.localtime(int(time.time())))
+# #########################
+# Model define
+def NVIDA(_input_shape, _num_classes):
+    inputs = Input(shape=_input_shape)
+    conv_1 = Conv2D(24, (5, 5), activation="relu", name="conv_1", strides=(2, 2))(inputs)
+    conv_2 = Conv2D(36, (5, 5), activation="relu", name="conv_2", strides=(2, 2))(conv_1)
+    conv_3 = Conv2D(48, (5, 5), activation='relu', name='conv_3', strides=(2, 2))(conv_2)
+    conv_3 = Dropout(.5)(conv_3)
+
+    conv_4 = Conv2D(64, (3, 3), activation="relu", name="conv_4", strides=(1, 1))(conv_3)
+    conv_5 = Conv2D(64, (3, 3), activation="relu", name="conv_5", strides=(1, 1))(conv_4)
+
+    flat = Flatten()(conv_5)
+
+    dense_1 = Dense(1164)(flat)
+    dense_1 = Dropout(.5)(dense_1)
+    dense_2 = Dense(100, activation='relu')(dense_1)
+    dense_2 = Dropout(.5)(dense_2)
+    dense_3 = Dense(50, activation='relu')(dense_2)
+    dense_3 = Dropout(.5)(dense_3)
+    dense_4 = Dense(10, activation='relu')(dense_3)
+    dense_4 = Dropout(.5)(dense_4)
+
+    final = Dense(_num_classes, activation=tf.atan)(dense_4)
+    # angle = Lambda(lambda x: tf.mul(tf.atan(x), 2))(final)
+
+    model = Model(inputs, final)
+    model.compile(
+        optimizer=SGD(lr=.001, momentum=.9),
+        loss='mse',
+        metrics=['accuracy'],
+    )
+
+    return model
 
 
-start_time = get_timestamp()
-saved_path = os.path.join(
-    '.',
-    'saved_model',
-    start_time,
-)
-
-if not os.path.exists(saved_path):
-    os.makedirs(saved_path)
-
-model_name = os.path.join(saved_path, 'model.h5')
-model_weight = os.path.join(saved_path, 'model_weight.h5')
-
-
-def get_checkpoint_name():
-    return os.path.join(saved_path, get_timestamp() + '.hdf5')
-
-
-def save(model):
-    model.save(model_name)
-    model.save_weights(model_weight)
-
-
+# #########################
+# Train set data generator
 def data_generator():
+    """
+    :return: (x, y) Train and validation set data generator
+    """
     train_datagen = ImageDataGenerator(
         rescale=1. / 255,
         # shear_range=0.2,
@@ -73,14 +101,14 @@ def data_generator():
     )
     test_datagen = ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
-        dir_util.trainset_dir,
+        TRAINSET_DIR,
         target_size=(img_width, img_height),
         batch_size=batch_size,
         classes=['0', '1', '2', '3', '4'],
         class_mode='categorical',
     )
     validation_generator = test_datagen.flow_from_directory(
-        dir_util.validation_dir,
+        VALIDATION_DIR,
         target_size=(img_width, img_height),
         batch_size=batch_size,
         classes=['0', '1', '2', '3', '4'],
@@ -90,74 +118,35 @@ def data_generator():
     return train_generator, validation_generator
 
 
-def train_v1():
-    (x_train, x_test), (y_train, y_test) = train_set.load_data("0001")
+def _main():
+    model = NVIDA(input_shape, num_classes)
 
-    print("x_train.shape :", x_train.shape)
-    print("y_train.shape :", y_train.shape)
-    print("x_test.shape  :", x_test.shape)
-    print("y_test.shape  :", y_test.shape)
-
-    # convert class vectors to binary class matrices
-    y_train = keras.utils.to_categorical(y_train, num_classes)
-    y_test = keras.utils.to_categorical(y_test, num_classes)
-
-    model = models.CNN(
-        input_shape=input_shape,
-        num_classes=num_classes
-    )
-
-    model.summary()
-
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=RMSprop(),
-                  metrics=['accuracy'])
-
-    check_point_file_name = get_checkpoint_name()
-
-    model_checkpoint = ModelCheckpoint(check_point_file_name)
-
-    history = model.fit(x_train, y_train,
-                        batch_size=batch_size,
-                        epochs=epochs,
-                        verbose=1,
-                        validation_data=(x_test, y_test))
-    save(model)
-
-    score = model.evaluate(x_test, y_test, verbose=0)
-
-    print('Test loss:', score[0])
-    print('Test accuracy:', score[1])
-
-
-def train_v2():
-    model = models.CapsNet(
-        input_shape=input_shape,
-        num_classes=num_classes,
-    )
-    model.compile(
-        loss='categorical_crossentropy',
-        optimizer='rmsprop',
-        metrics=['accuracy']
-    )
     train_generator, validation_generator = data_generator()
 
-    # check_point_file_name = get_checkpoint_name()
-    # model_checkpoint = ModelCheckpoint(check_point_file_name)
+    checkpoint = ModelCheckpoint(
+        filepath=os.path.join(saved_path, "weights.{epoch:02d}-{val_acc:.12f}.hdf5"),
+        verbose=1,
+        save_best_only=True
+    )
+    lr_plateau = ReduceLROnPlateau(monitor='val_acc', factor=0.2, patience=5, min_lr=0.000001, verbose=1, mode=min)
+    # monitor = RemoteMonitor(root='http://localhost:9000', path='/publish/epoch/end/', field='data', headers=None)
 
-    model.fit_generator(
+    history = model.fit_generator(
         train_generator,
         steps_per_epoch=batch_size,
         epochs=epochs,
-        verbose=2,
+        verbose=1,
         validation_data=validation_generator,
-        validation_steps=batch_size
+        validation_steps=batch_size,
+        callbacks=[checkpoint, lr_plateau],
     )
-    save(model)
 
+    with codecs.open(history_name, 'wb', 'utf8') as fp:
+        json.dump(dict((k, np.array(v).tolist()) for k, v in history.history.items()), fp)
 
-def _main():
-    train_v2()
+    model.save(model_name)
+
+    print('Done.')
 
 
 if __name__ == '__main__':
