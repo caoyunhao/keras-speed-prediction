@@ -5,6 +5,7 @@
 # @File    : tool.py
 import codecs
 import os
+
 import cv2
 import numpy as np
 
@@ -12,32 +13,38 @@ import config
 
 __author__ = 'Yunhao Cao'
 
-LV_LIST = [
-    0.1,
-    10,
-    25,
-    45,
-    1 << 32,
-]
-
-ORIGIN_SHAPE = (375, 1242, 3)
-CUT_SHAPE_0 = (300, 1200, 3)  # 1：4
-CUT_SHAPE_1 = (30, 120, 3)  # 1：4
-CUT_SHAPE_2 = (75, 300, 3)  # 1：4
-
-TRAIN_SHAPE = CUT_SHAPE_2
+level_list = config.LV_LIST
+input_shape = config.TRAIN_SHAPE
 
 compare_path = os.path.join
-TRAINSET_DIR = config.TRAINSET_DIR
-VALIDATION_DIR = config.VALIDATION_DIR
 
-train_set_dir = TRAINSET_DIR
-validation_set_dir = VALIDATION_DIR
+train_set_dir = config.TRAINSET_DIR
+validation_set_dir = config.VALIDATION_DIR
 sync_name = 'sync.txt'
 
 
+def get_max_index(l):
+    max_index = 0
+    max_item = 0
+    for i, item in enumerate(l):
+        if item > max_item:
+            max_item = item
+            max_index = i
+
+    return max_index
+
+
+def get_v_range(level):
+    start = level_list[level - 1] if level > 0 else 0
+    if (level + 1) < len(level_list):
+        end = level_list[level]
+    else:
+        end = None
+    return start, end
+
+
 def TRAIN_SET_DIR_i(i):
-    return compare_path(TRAINSET_DIR, 'set_' + i)
+    return compare_path(train_set_dir, 'set_' + i)
 
 
 def train_set_images(i):

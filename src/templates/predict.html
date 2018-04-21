@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Predict</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif Arial;
+            background: #eee;
+        }
+
+        body {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .page {
+            margin: 1em auto;
+            border: 5px solid #ccc;
+            background: white;
+        }
+
+        .form-file {
+            height: 100px;
+            width: 400px;
+        }
+
+        .form-input {
+            height: 100px;
+            width: 400px;
+        }
+
+        #image_preview {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class=page>
+    <div style="color: #377BA8; font-size: 72px; padding: 0.2em">Predict</div>
+    <div>
+        <form method="post" action="{{ url_for('predict') }}" enctype="multipart/form-data">
+            <input id="image" class="form-file" type="file" name="file"/>
+            <input name="cv" placeholder="输入当前的速度(km/s)"/>
+            <input class="form-input" type="submit" value=" 预测 "/>
+        </form>
+    </div>
+    <div id="image_preview_box">
+        <img id="image_preview" src="{{ image_url }}">
+    </div>
+    {% if predict_result_msg %}
+    <div>
+        <div id="predict_result_msg" style="color: red; font-size: 48px">
+            {{ predict_result_msg }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script>
+    var image = document.getElementById('image');
+    var image_preview_box = document.getElementById('image_preview_box');
+    if (typeof (FileReader) === 'undefined') {
+        image_preview_box.innerHTML = "抱歉，你的浏览器不支持 FileReader，请使用现代浏览器操作！";
+        image.setAttribute('disabled', 'disabled');
+    } else {
+        image.addEventListener('change', readFile, false);
+    }
+    var image_preview = document.getElementById('image_preview');
+    var predict_result_msg = document.getElementById('predict_result_msg');
+
+    function readFile() {
+        var file = this.files[0];
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = function (e) {
+            console.log('onloaded');
+            var base64Code = this.result;
+            console.log(base64Code);
+            // image_preview_box.style.display = 'block';
+            image_preview.setAttribute('src', base64Code);
+            predict_result_msg.innerText = ''
+        }
+    }
+</script>
+</body>
+</html>

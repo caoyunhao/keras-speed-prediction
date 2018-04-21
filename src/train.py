@@ -20,30 +20,26 @@ import config
 
 __author__ = 'Yunhao Cao'
 
-__all__ = [
-    '',
-]
-
 # Train config
 batch_size = config.batch_size
 epochs = config.epochs
 
-# config
+# dir config
 TRAINSET_DIR = config.TRAINSET_DIR
 VALIDATION_DIR = config.VALIDATION_DIR
+# shape config
 TRAIN_SHAPE = config.TRAIN_SHAPE
 
 num_classes = config.NUM_OF_LEVEL
+classes = config.CLASSES
 img_width, img_height = TRAIN_SHAPE[:2]
 
 # #########################
 # output config
 start_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(int(time.time())))
 saved_path = os.path.join('.', 'saved_model', start_time)
-model_name = os.path.join(saved_path, 'model.hdf5')
+model_name = os.path.join(saved_path, 'model.h5')
 history_name = os.path.join(saved_path, 'history.json')
-
-os.makedirs(saved_path)
 
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
@@ -104,14 +100,14 @@ def data_generator():
         TRAINSET_DIR,
         target_size=(img_width, img_height),
         batch_size=batch_size,
-        classes=['0', '1', '2', '3', '4'],
+        classes=classes,
         class_mode='categorical',
     )
     validation_generator = test_datagen.flow_from_directory(
         VALIDATION_DIR,
         target_size=(img_width, img_height),
         batch_size=batch_size,
-        classes=['0', '1', '2', '3', '4'],
+        classes=classes,
         class_mode='categorical',
     )
 
@@ -119,6 +115,7 @@ def data_generator():
 
 
 def _main():
+    os.makedirs(saved_path)
     model = NVIDA(input_shape, num_classes)
 
     train_generator, validation_generator = data_generator()
