@@ -32,9 +32,6 @@ resize = tool.image_cut
 
 static_images_path = os.path.join(static_path, 'images')
 
-if not os.path.exists(static_images_path):
-    os.makedirs(static_images_path)
-
 with CustomObjectScope({
     'atan': tf.atan,
 }):
@@ -123,6 +120,8 @@ def image_url(name):
 
 
 def _main():
+    if not os.path.exists(static_images_path):
+        os.makedirs(static_images_path)
     app.run(host="0.0.0.0")
 
 
