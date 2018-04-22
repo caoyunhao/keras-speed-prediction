@@ -5,6 +5,7 @@
 # @File    : train_set.py
 import os
 import re
+import shutil
 
 import tool
 import config
@@ -17,9 +18,13 @@ __all__ = [
 
 level_list = config.LV_LIST
 classes = config.NUM_OF_LEVEL
-rate = config.rate
+validation_rate = config.VALIDATION_RATE
+
 origin_data_dir = config.ORIGIN_DATA_DIR
+processed_set_dir = config.PROCESSED_SET_DIR
 trainset_dir = config.TRAINSET_DIR
+validation_set_dir = config.VALIDATION_DIR
+
 cut_shape = config.CUT_SHAPE_0
 train_shape = config.TRAIN_SHAPE
 
@@ -68,7 +73,7 @@ def to_name(i):
     return '{}{}{}'.format(''.join(['0' for i in range(0, 10 - len(i))]), i, '.png')
 
 
-def copy():
+def copy_to_process_set():
     for i, set_dir in enumerate(tool.get_all(origin_data_dir)):
 
         lines = tool.read_text(compare_path(set_dir, 'sync.txt'))
@@ -77,7 +82,7 @@ def copy():
 
         for image_index, line in enumerate(lines):
             v, level = line.split()
-            target_path = compare_path(tool.train_set_dir, level)
+            target_path = compare_path(processed_set_dir, level)
             if not os.path.exists(target_path):
                 os.makedirs(target_path)
 
@@ -97,24 +102,40 @@ def copy():
                 tool.image_save(target_filename, data)
 
 
-def to_validation():
-    for i, cate_dirname in enumerate(os.listdir(tool.train_set_dir)):
+def split_validation_by_copy():
+    import random
+    from_dir = processed_set_dir
+    for i, cate_dirname in enumerate(os.listdir(from_dir)):
         if cate_dirname.startswith('.'):
             continue
 
-        cate_dir = compare_path(tool.train_set_dir, cate_dirname)
+        cate_dir = compare_path(from_dir, cate_dirname)
         cate_listdir = list(filter(lambda x: not x.startswith('.'), os.listdir(cate_dir)))
 
-        n = len(cate_listdir) // 5
+        n = int(len(cate_listdir) * validation_rate)
 
-        target_path = compare_path(tool.validation_set_dir, cate_dirname)
+        validation_files = random.sample(cate_listdir, n)
 
-        if not os.path.exists(target_path):
-            os.makedirs(target_path)
+        validation_cate_path = compare_path(validation_set_dir, cate_dirname)
 
-        for i in range(n):
-            os.rename(compare_path(cate_dir, cate_listdir[i]),
-                      compare_path(target_path, cate_listdir[i]))
+        print(validation_cate_path)
+
+        if not os.path.exists(validation_cate_path):
+            os.makedirs(validation_cate_path)
+
+        for validation_file in validation_files:
+            shutil.copy(compare_path(cate_dir, validation_file),
+                        compare_path(validation_cate_path, validation_file))
+
+        train_set_path = compare_path(trainset_dir, cate_dirname)
+
+        if not os.path.exists(train_set_path):
+            os.makedirs(train_set_path)
+
+        train_set_files = list(set(cate_listdir).difference(set(validation_files)))
+        for train_set_file in train_set_files:
+            shutil.copy(compare_path(cate_dir, train_set_file),
+                        compare_path(train_set_path, train_set_file))
 
 
 def _test():
@@ -122,8 +143,8 @@ def _test():
     # print(get_flag('0001').shape)
     # print(tool.dir_util.origin_sync_dirname)
     # generate_sync_txt()
-    copy()
-    to_validation()
+    # copy_to_process_set()
+    split_validation_by_copy()
 
 
 if __name__ == '__main__':

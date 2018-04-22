@@ -20,6 +20,7 @@ PROJECT_ROOT = ''
 PROJECT_SRC = path_join(PROJECT_ROOT, 'src')
 PROJECT_DATASET = path_join(PROJECT_ROOT, 'dataset')
 
+PROCESSED_SET_DIR = path_join(PROJECT_DATASET, 'processed_set')
 TRAINSET_DIR = path_join(PROJECT_DATASET, 'train_set')
 VALIDATION_DIR = path_join(PROJECT_DATASET, 'validation_set')
 
@@ -39,7 +40,7 @@ CLASSES = ['0', '1', '2', '3']
 
 NUM_OF_LEVEL = len(LV_LIST)
 
-rate = 0.8
+VALIDATION_RATE = 0.2
 
 ORIGIN_SHAPE = (375, 1242, 3)
 CUT_SHAPE_0 = (300, 1200, 3)  # 1：4
