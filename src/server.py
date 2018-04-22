@@ -49,15 +49,15 @@ def get_receive_name():
     return "{}_{}.png".format(get_time(), uuid.uuid4())
 
 
-def v_message(v_range):
+def v_message(v_range, v_level):
     start = v_range[0]
     end = v_range[1]
     if start == 0:
-        return '建议速度 0~{} km/h'.format(end)
+        return '建议速度 0~{} km/h. ({})'.format(end, v_level)
     elif end is None:
-        return '建议速度大于 {} km/h'.format(start)
+        return '建议速度大于 {} km/h. ({})'.format(start, v_level)
     else:
-        return '建议速度 {}~{} km/h'.format(start, end)
+        return '建议速度 {}~{} km/h. ({})'.format(start, end, v_level)
 
 
 app = Flask(__name__)
@@ -105,10 +105,12 @@ def predict():
 
             ret = model.predict(data[None, :, :, :], batch_size=1, verbose=1)
 
+            print(ret)
+
             v_level = tool.get_max_index(list(ret[0]))
             v_range = tool.get_v_range(v_level)
 
-            msg += v_message(v_range)
+            msg += v_message(v_range, v_level)
 
             predict_result_msg = msg
 
