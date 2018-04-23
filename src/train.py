@@ -12,17 +12,29 @@ from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras.layers import Dense, Dropout, Flatten, Conv2D
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
-from keras import backend as K, Input, Model
+from keras import backend as K, Input, Model, models
 import tensorflow as tf
 import numpy as np
 
 import config
+from keras.utils import CustomObjectScope
 
 __author__ = 'Yunhao Cao'
 
 # Train config
 batch_size = config.batch_size
 epochs = config.epochs
+
+# Train old model.(selected model)
+use_selected_model = config.USE_SELECTED_MODEL
+selected_model_path = config.SELECTED_MODEL_PATH
+
+print("batch_size         :", selected_model_path)
+print("epochs             :", selected_model_path)
+print("use_selected_model :", use_selected_model)
+print("selected_model_path:", selected_model_path)
+print('Waiting...(5s)')
+time.sleep(5)
 
 # dir config
 TRAINSET_DIR = config.TRAINSET_DIR
@@ -49,8 +61,8 @@ else:
 
 # #########################
 # Model define
-def NVIDA(_input_shape, _num_classes):
-    inputs = Input(shape=_input_shape)
+def NVIDA():
+    inputs = Input(shape=input_shape)
     conv_1 = Conv2D(24, (5, 5), activation="relu", name="conv_1", strides=(2, 2))(inputs)
     conv_2 = Conv2D(36, (5, 5), activation="relu", name="conv_2", strides=(2, 2))(conv_1)
     conv_3 = Conv2D(48, (5, 5), activation='relu', name='conv_3', strides=(2, 2))(conv_2)
@@ -70,7 +82,7 @@ def NVIDA(_input_shape, _num_classes):
     dense_4 = Dense(10, activation='relu')(dense_3)
     dense_4 = Dropout(.5)(dense_4)
 
-    final = Dense(_num_classes, activation=tf.atan)(dense_4)
+    final = Dense(num_classes, activation=tf.atan)(dense_4)
     # angle = Lambda(lambda x: tf.mul(tf.atan(x), 2))(final)
 
     model = Model(inputs, final)
@@ -81,6 +93,17 @@ def NVIDA(_input_shape, _num_classes):
     )
 
     return model
+
+
+def get_model():
+    if use_selected_model:
+        with CustomObjectScope({
+            'atan': tf.atan,
+        }):
+            model = models.load_model(selected_model_path)
+        return model
+    else:
+        return NVIDA()
 
 
 # #########################
@@ -117,7 +140,7 @@ def data_generator():
 
 def _main():
     os.makedirs(saved_path)
-    model = NVIDA(input_shape, num_classes)
+    model = get_model()
 
     train_generator, validation_generator = data_generator()
 

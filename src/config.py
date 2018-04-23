@@ -20,13 +20,18 @@ PROJECT_ROOT = ''
 PROJECT_SRC = path_join(PROJECT_ROOT, 'src')
 PROJECT_DATASET = path_join(PROJECT_ROOT, 'dataset')
 
+# dir config
 PROCESSED_SET_DIR = path_join(PROJECT_DATASET, 'processed_set')
 TRAINSET_DIR = path_join(PROJECT_DATASET, 'train_set')
 VALIDATION_DIR = path_join(PROJECT_DATASET, 'validation_set')
 
-# server
-MODEL_PATH = path_join(PROJECT_SRC, 'saved_model', '20180415_154216', 'model.h5')
-WEIGHT_PATH = path_join(PROJECT_SRC, 'saved_model', '20180415_154216', 'weights.20-0.324324325073.hdf5')
+# Train old model.(selected model)
+USE_SELECTED_MODEL = True
+SELECTED_MODEL_PATH = path_join(PROJECT_SRC, 'saved_model', '20180422_145130', 'model.h5')
+
+# server path config
+MODEL_PATH = path_join(PROJECT_SRC, 'saved_model', '20180422_145130', 'model.h5')
+WEIGHT_PATH = path_join(PROJECT_SRC, 'saved_model', '20180422_145130', 'weights.20-0.324324325073.hdf5')
 STATIC_PATH = path_join(PROJECT_SRC, 'static')
 
 LV_LIST = [
