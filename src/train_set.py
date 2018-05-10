@@ -44,9 +44,9 @@ def get_lv(v) -> int:
 
 
 def generate_sync_txt():
-    vf = 8
-    vl = 9
-    af = 14
+    vf = 8  # forward velocity, i.e. parallel to earth-surface (m/s)
+    vl = 9  # leftward velocity, i.e. parallel to earth-surface (m/s)
+    af = 14  # forward acceleration (m/s^2)
 
     for dir_ in tool.get_all(origin_data_dir):
         sync_data_dir = compare_path(dir_, 'oxts', 'data')

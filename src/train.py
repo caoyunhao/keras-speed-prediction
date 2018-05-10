@@ -8,16 +8,16 @@ import json
 import os
 import time
 
+from keras import backend as K, Input, Model, models, Sequential
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
-from keras.layers import Dense, Dropout, Flatten, Conv2D
+from keras.layers import Dense, Dropout, Flatten, Conv2D, Activation, Lambda, MaxPooling2D, LSTM
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
-from keras import backend as K, Input, Model, models
+from keras.utils import CustomObjectScope
 import tensorflow as tf
 import numpy as np
 
 import config
-from keras.utils import CustomObjectScope
 
 __author__ = 'Yunhao Cao'
 
@@ -95,6 +95,85 @@ def NVIDA():
     return model
 
 
+def model_v1():
+    model = Sequential()
+
+    model.add(Conv2D(8, 3, 3, init='normal', border_mode='valid', input_shape=input_shape))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D((2, 2), border_mode='valid'))
+    model.add(Dropout(0.2))
+
+    model.add(Flatten())
+    model.add(Dense(num_classes))
+
+    model.compile(
+        optimizer=SGD(lr=.001, momentum=.9),
+        loss='mse',
+        metrics=['accuracy'],
+    )
+
+    # model.summary()
+
+    return model
+
+
+def model_v2():
+    inputs = Input(shape=input_shape)
+
+    conv_1 = Conv2D(8, (3, 3), init='normal', padding='valid',
+                    activation="relu", name="conv_1", strides=(2, 2))(inputs)
+    pool_1 = MaxPooling2D((2, 2), padding='valid')(conv_1)
+    pool_1 = Dropout(0.2)(pool_1)
+
+    flat = Flatten()(pool_1)
+
+    final = Dense(num_classes, activation='softmax')(flat)
+
+    model = Model(inputs, final)
+    model.compile(
+        optimizer=SGD(lr=.001, momentum=.9),
+        loss='mse',
+        metrics=['accuracy'],
+    )
+
+    return model
+
+
+def model_v3():
+    inputs = Input(shape=input_shape)
+
+    conv_1 = Conv2D(256, (3, 3), kernel_initializer='normal', padding='valid',
+                    activation="relu", name="conv_1", strides=(1, 1))(inputs)
+    conv_1 = Dropout(0.2)(conv_1)
+
+    conv_2 = Conv2D(128, (3, 3), kernel_initializer='normal', padding='valid',
+                    activation="relu", name="conv_2", strides=(1, 1))(conv_1)
+    conv_2 = MaxPooling2D((2, 2), padding='valid')(conv_2)
+    conv_2 = Dropout(0.2)(conv_2)
+
+    conv_3 = Conv2D(32, (3, 3), kernel_initializer='normal', padding='valid',
+                    activation="relu", name="conv_3", strides=(1, 1))(conv_2)
+    conv_3 = Dropout(0.2)(conv_3)
+
+    conv_4 = Conv2D(16, (3, 3), kernel_initializer='normal', padding='valid',
+                    activation="relu", name="conv_4", strides=(1, 1))(conv_3)
+    conv_4 = MaxPooling2D((2, 2), padding='valid')(conv_4)
+    conv_4 = Dropout(0.2)(conv_4)
+
+    flat = Flatten()(conv_4)
+
+    final = Dense(num_classes, activation='softmax')(flat)
+
+    model = Model(inputs, final)
+    model.compile(
+        optimizer=SGD(lr=.001, momentum=.9),
+        loss='mse',
+        metrics=['accuracy'],
+    )
+
+    return model
+
+
 def get_model():
     if use_selected_model:
         with CustomObjectScope({
@@ -103,7 +182,7 @@ def get_model():
             model = models.load_model(selected_model_path)
         return model
     else:
-        return NVIDA()
+        return model_v3()
 
 
 # #########################

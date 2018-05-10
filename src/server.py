@@ -32,13 +32,6 @@ resize = tool.image_cut
 
 static_images_path = os.path.join(static_path, 'images')
 
-with CustomObjectScope({
-    'atan': tf.atan,
-}):
-    model = keras.models.load_model(model_path)
-
-model._make_predict_function()
-
 
 def get_time():
     t = int(time.time())
@@ -94,6 +87,13 @@ def predict():
             msg = ''
 
         if image:
+            with CustomObjectScope({
+                'atan': tf.atan,
+            }):
+                model = keras.models.load_model(model_path)
+
+            model._make_predict_function()
+
             image_name = get_receive_name()
             image_static_path = os.path.join(static_images_path, image_name)
 
