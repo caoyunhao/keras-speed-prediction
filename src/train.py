@@ -142,20 +142,20 @@ def model_v2():
 def model_v3():
     inputs = Input(shape=input_shape)
 
-    conv_1 = Conv2D(256, (3, 3), kernel_initializer='normal', padding='valid',
+    conv_1 = Conv2D(64, (5, 5), kernel_initializer='normal', padding='valid',
                     activation="relu", name="conv_1", strides=(1, 1))(inputs)
     conv_1 = Dropout(0.2)(conv_1)
 
-    conv_2 = Conv2D(128, (3, 3), kernel_initializer='normal', padding='valid',
+    conv_2 = Conv2D(48, (5, 5), kernel_initializer='normal', padding='valid',
                     activation="relu", name="conv_2", strides=(1, 1))(conv_1)
     conv_2 = MaxPooling2D((2, 2), padding='valid')(conv_2)
     conv_2 = Dropout(0.2)(conv_2)
 
-    conv_3 = Conv2D(32, (3, 3), kernel_initializer='normal', padding='valid',
+    conv_3 = Conv2D(24, (5, 5), kernel_initializer='normal', padding='valid',
                     activation="relu", name="conv_3", strides=(1, 1))(conv_2)
     conv_3 = Dropout(0.2)(conv_3)
 
-    conv_4 = Conv2D(16, (3, 3), kernel_initializer='normal', padding='valid',
+    conv_4 = Conv2D(16, (5, 5), kernel_initializer='normal', padding='valid',
                     activation="relu", name="conv_4", strides=(1, 1))(conv_3)
     conv_4 = MaxPooling2D((2, 2), padding='valid')(conv_4)
     conv_4 = Dropout(0.2)(conv_4)
