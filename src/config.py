@@ -24,6 +24,7 @@ PROJECT_DATASET = path_join(PROJECT_ROOT, 'dataset')
 PROCESSED_SET_DIR = path_join(PROJECT_DATASET, 'processed_set')
 TRAINSET_DIR = path_join(PROJECT_DATASET, 'train_set')
 VALIDATION_DIR = path_join(PROJECT_DATASET, 'validation_set')
+TEST_DIR = path_join(PROJECT_DATASET, 'test_set')
 
 # Train old model.(selected model)
 USE_SELECTED_MODEL = True
@@ -45,7 +46,8 @@ CLASSES = ['0', '1', '2', '3']
 
 NUM_OF_LEVEL = len(LV_LIST)
 
-VALIDATION_RATE = 0.2
+VALIDATION_RATE = 0.1
+TEST_RATE = 0.1
 
 ORIGIN_SHAPE = (375, 1242, 3)
 CUT_SHAPE_0 = (300, 1200, 3)  # 1：4

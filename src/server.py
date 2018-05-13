@@ -8,9 +8,7 @@ import time
 import uuid
 
 from flask import Flask, request, render_template, url_for
-import keras
-from keras.utils.generic_utils import CustomObjectScope
-import tensorflow as tf
+
 import cv2
 import tool
 import config
@@ -29,6 +27,7 @@ image_height = config.IMAGE_HEIGHT
 static_path = config.STATIC_PATH
 
 resize = tool.image_cut
+load_model = tool.load_model
 
 static_images_path = os.path.join(static_path, 'images')
 
@@ -87,12 +86,7 @@ def predict():
             msg = ''
 
         if image:
-            with CustomObjectScope({
-                'atan': tf.atan,
-            }):
-                model = keras.models.load_model(model_path)
-
-            model._make_predict_function()
+            model = load_model(model_path)
 
             image_name = get_receive_name()
             image_static_path = os.path.join(static_images_path, image_name)

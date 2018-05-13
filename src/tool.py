@@ -7,20 +7,33 @@ import codecs
 import os
 
 import cv2
+import keras
 import numpy as np
+import tensorflow as tf
+from keras.preprocessing.image import ImageDataGenerator
+from keras.utils import CustomObjectScope
 
 import config
 
 __author__ = 'Yunhao Cao'
 
-level_list = config.LV_LIST
-input_shape = config.TRAIN_SHAPE
+batch_size = config.batch_size
+epochs = config.epochs
 
-compare_path = os.path.join
+level_list = config.LV_LIST
+train_shape = config.TRAIN_SHAPE
 
 train_set_dir = config.TRAINSET_DIR
 validation_set_dir = config.VALIDATION_DIR
+
+# test
+test_set_dir = config.TEST_DIR
+img_width, img_height = train_shape[:2]
+classes = config.CLASSES
+
 sync_name = 'sync.txt'
+
+compare_path = os.path.join
 
 
 def get_max_index(l):
@@ -119,5 +132,41 @@ def ArrayCut(array, out_shape, mode=5):
     return array[y_start:y_end, x_start: x_end]
 
 
+def image_generator(path):
+    datagen = ImageDataGenerator(
+        rescale=1. / 255,
+        rotation_range=10,
+        # shear_range=0.2,
+        # zoom_range=0.2,
+        # horizontal_flip=True
+    )
+    generator = datagen.flow_from_directory(
+        path,
+        target_size=(img_width, img_height),
+        batch_size=batch_size,
+        classes=classes,
+        class_mode='categorical',
+    )
+    return generator
+
+
+def load_model(model_path):
+    with CustomObjectScope({
+        'atan': tf.atan,
+    }):
+        model = keras.models.load_model(model_path)
+
+    model._make_predict_function()
+
+    return model
+
+
+def test_model(model):
+    generator = image_generator(test_set_dir)
+    score = model.evaluate_generator(generator, steps=20)
+    print('Test loss:', score[0])
+    print('Test accuracy:', score[1])
+
+
 if __name__ == '__main__':
-    pass
+    test_model(load_model(config.SELECTED_MODEL_PATH))

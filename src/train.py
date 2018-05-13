@@ -8,16 +8,16 @@ import json
 import os
 import time
 
-from keras import backend as K, Input, Model, models, Sequential
+import numpy as np
+import tensorflow as tf
+from keras import backend as K, Input, Model, Sequential
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
-from keras.layers import Dense, Dropout, Flatten, Conv2D, Activation, Lambda, MaxPooling2D, LSTM
+from keras.layers import Dense, Dropout, Flatten, Conv2D, Activation, MaxPooling2D
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
-from keras.utils import CustomObjectScope
-import tensorflow as tf
-import numpy as np
 
 import config
+import tool
 
 __author__ = 'Yunhao Cao'
 
@@ -29,6 +29,20 @@ epochs = config.epochs
 use_selected_model = config.USE_SELECTED_MODEL
 selected_model_path = config.SELECTED_MODEL_PATH
 
+# dir config
+TRAINSET_DIR = config.TRAINSET_DIR
+VALIDATION_DIR = config.VALIDATION_DIR
+# shape config
+TRAIN_SHAPE = config.TRAIN_SHAPE
+num_classes = config.NUM_OF_LEVEL
+classes = config.CLASSES
+
+load_model = tool.load_model
+test_model = tool.test_model
+image_generator = tool.image_generator
+
+img_width, img_height = TRAIN_SHAPE[:2]
+
 print("batch_size         :", selected_model_path)
 print("epochs             :", selected_model_path)
 print("use_selected_model :", use_selected_model)
@@ -36,21 +50,12 @@ print("selected_model_path:", selected_model_path)
 print('Waiting...(5s)')
 time.sleep(5)
 
-# dir config
-TRAINSET_DIR = config.TRAINSET_DIR
-VALIDATION_DIR = config.VALIDATION_DIR
-# shape config
-TRAIN_SHAPE = config.TRAIN_SHAPE
-
-num_classes = config.NUM_OF_LEVEL
-classes = config.CLASSES
-img_width, img_height = TRAIN_SHAPE[:2]
-
 # #########################
 # output config
 start_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(int(time.time())))
 saved_path = os.path.join('.', 'saved_model', start_time)
 model_name = os.path.join(saved_path, 'model.h5')
+model_json = os.path.join(saved_path, 'model.json')
 history_name = os.path.join(saved_path, 'history.json')
 
 if K.image_data_format() == 'channels_first':
@@ -176,13 +181,20 @@ def model_v3():
 
 def get_model():
     if use_selected_model:
-        with CustomObjectScope({
-            'atan': tf.atan,
-        }):
-            model = models.load_model(selected_model_path)
-        return model
+        return load_model(selected_model_path)
     else:
         return model_v3()
+
+
+def save_history(history):
+    with codecs.open(history_name, 'wb', 'utf8') as fp:
+        json.dump(dict((k, np.array(v).tolist()) for k, v in history.history.items()), fp)
+
+
+def save_model(model):
+    model.save(model_name)
+    with codecs.open(model_json, 'wb', 'utf8') as fp:
+        fp.write(model.to_json())
 
 
 # #########################
@@ -191,30 +203,7 @@ def data_generator():
     """
     :return: (x, y) Train and validation set data generator
     """
-    train_datagen = ImageDataGenerator(
-        rescale=1. / 255,
-        rotation_range=10,
-        # shear_range=0.2,
-        # zoom_range=0.2,
-        # horizontal_flip=True
-    )
-    test_datagen = ImageDataGenerator(rescale=1. / 255)
-    train_generator = train_datagen.flow_from_directory(
-        TRAINSET_DIR,
-        target_size=(img_width, img_height),
-        batch_size=batch_size,
-        classes=classes,
-        class_mode='categorical',
-    )
-    validation_generator = test_datagen.flow_from_directory(
-        VALIDATION_DIR,
-        target_size=(img_width, img_height),
-        batch_size=batch_size,
-        classes=classes,
-        class_mode='categorical',
-    )
-
-    return train_generator, validation_generator
+    return image_generator(TRAINSET_DIR), image_generator(VALIDATION_DIR)
 
 
 def _main():
@@ -245,6 +234,8 @@ def _main():
         json.dump(dict((k, np.array(v).tolist()) for k, v in history.history.items()), fp)
 
     model.save(model_name)
+
+    test_model(model)
 
     print('Done.')
 

@@ -19,11 +19,13 @@ __all__ = [
 level_list = config.LV_LIST
 classes = config.NUM_OF_LEVEL
 validation_rate = config.VALIDATION_RATE
+test_rate = config.TEST_RATE
 
 origin_data_dir = config.ORIGIN_DATA_DIR
 processed_set_dir = config.PROCESSED_SET_DIR
 trainset_dir = config.TRAINSET_DIR
 validation_set_dir = config.VALIDATION_DIR
+test_set_dir = config.TEST_DIR
 
 cut_shape = config.CUT_SHAPE_0
 train_shape = config.TRAIN_SHAPE
@@ -102,7 +104,7 @@ def copy_to_process_set():
                 tool.image_save(target_filename, data)
 
 
-def split_validation_by_copy():
+def split_by_copy():
     import random
     from_dir = processed_set_dir
     for i, cate_dirname in enumerate(os.listdir(from_dir)):
@@ -112,14 +114,17 @@ def split_validation_by_copy():
         cate_dir = compare_path(from_dir, cate_dirname)
         cate_listdir = list(filter(lambda x: not x.startswith('.'), os.listdir(cate_dir)))
 
-        n = int(len(cate_listdir) * validation_rate)
+        v_t_n = int(len(cate_listdir) * (validation_rate + test_rate))
 
-        validation_files = random.sample(cate_listdir, n)
+        v_n = int(v_t_n * validation_rate / (validation_rate + test_rate))
+
+        validation_test_files = random.sample(cate_listdir, v_t_n)
+
+        validation_files = validation_test_files[:v_n]
+        test_files = validation_test_files[v_n:]
 
         validation_cate_path = compare_path(validation_set_dir, cate_dirname)
-
         print(validation_cate_path)
-
         if not os.path.exists(validation_cate_path):
             os.makedirs(validation_cate_path)
 
@@ -127,12 +132,20 @@ def split_validation_by_copy():
             shutil.copy(compare_path(cate_dir, validation_file),
                         compare_path(validation_cate_path, validation_file))
 
-        train_set_path = compare_path(trainset_dir, cate_dirname)
+        test_cate_path = compare_path(test_set_dir, cate_dirname)
+        print(test_cate_path)
+        if not os.path.exists(test_cate_path):
+            os.makedirs(test_cate_path)
 
+        for file_name in test_files:
+            shutil.copy(compare_path(cate_dir, file_name),
+                        compare_path(test_cate_path, file_name))
+
+        train_set_path = compare_path(trainset_dir, cate_dirname)
         if not os.path.exists(train_set_path):
             os.makedirs(train_set_path)
 
-        train_set_files = list(set(cate_listdir).difference(set(validation_files)))
+        train_set_files = list(set(cate_listdir).difference(set(validation_files)).difference(set(test_files)))
         for train_set_file in train_set_files:
             shutil.copy(compare_path(cate_dir, train_set_file),
                         compare_path(train_set_path, train_set_file))
@@ -144,7 +157,7 @@ def _test():
     # print(tool.dir_util.origin_sync_dirname)
     # generate_sync_txt()
     # copy_to_process_set()
-    split_validation_by_copy()
+    split_by_copy()
 
 
 if __name__ == '__main__':
