@@ -68,6 +68,10 @@ def get_all(dir_: str) -> list:
     return list(sorted([os.path.join(dir_, name) for name in os.listdir(dir_) if not name.startswith('.')]))
 
 
+def curname(fullpath):
+    return fullpath.split(os.path.sep)[-1]
+
+
 def read_text(filename):
     with codecs.open(filename, "r", 'utf8') as f:
         return [_.split('\n')[0] for _ in f.readlines() if _]
@@ -150,6 +154,11 @@ def image_generator(path):
     return generator
 
 
+def save_model_json(model, json_path):
+    with codecs.open(json_path, 'wb', 'utf8') as fp:
+        fp.write(model.to_json())
+
+
 def load_model(model_path):
     with CustomObjectScope({
         'atan': tf.atan,
@@ -168,5 +177,33 @@ def test_model(model):
     print('Test accuracy:', score[1])
 
 
+def history2csv(model_dir):
+    import json
+
+    history_json = compare_path(model_dir, 'history.json')
+    history_csv = compare_path(model_dir, 'history.csv')
+
+    with codecs.open(history_json, 'r', 'utf8') as f:
+        obj = json.load(f)
+
+    def item(k):
+        return ','.join([k, ] + list(map(str, obj[k])))
+
+    epochs_line = ','.join(['epochs'] + list(map(str, range(1, epochs + 1))))
+
+    line_all = '\n'.join([
+        epochs_line,
+        item('val_acc'),
+        item('val_loss'),
+        item('acc'),
+        item('loss'),
+    ])
+
+    with codecs.open(history_csv, 'wb', 'utf8') as f:
+        f.writelines(line_all)
+
+
 if __name__ == '__main__':
-    test_model(load_model(config.SELECTED_MODEL_PATH))
+    # test_model(load_model(config.SELECTED_MODEL_PATH))
+    # save_model_json(load_model(config.SELECTED_MODEL_PATH), config.SELECTED_MODEL_JSON)
+    history2csv(config.SELECTED_MODEL_DIR)

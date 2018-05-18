@@ -7,6 +7,8 @@ import os
 import re
 import shutil
 
+import cv2
+import numpy as np
 import tool
 import config
 
@@ -16,6 +18,7 @@ __all__ = [
     '',
 ]
 
+# config
 level_list = config.LV_LIST
 classes = config.NUM_OF_LEVEL
 validation_rate = config.VALIDATION_RATE
@@ -33,7 +36,10 @@ train_shape = config.TRAIN_SHAPE
 image_width = config.IMAGE_WIDTH
 image_height = config.IMAGE_HEIGHT
 
+# External function
 compare_path = tool.compare_path
+get_all = tool.get_all
+curname = tool.curname
 
 
 def get_lv(v) -> int:
@@ -151,13 +157,71 @@ def split_by_copy():
                         compare_path(train_set_path, train_set_file))
 
 
+def image_to_feature_vector(image, size=(image_width, image_height)):
+    # resize the image to a fixed size, then flatten the image into
+    # a list of raw pixel intensities
+    return cv2.resize(image, size).flatten()
+
+
+def extract_color_histogram(image, bins=(32, 32, 32)):
+    # extract a 3D color histogram from the HSV color space using
+    # the supplied number of `bins` per channel
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    hist = cv2.calcHist([hsv], [0, 1, 2], None, bins,
+                        [0, 180, 0, 256, 0, 256])
+
+    cv2.normalize(hist, hist)
+
+    # return the flattened histogram as the feature vector
+    return hist.flatten()
+
+
+def load_data():
+    raw_images = []
+    features = []
+    labels = []
+
+    # loop over the input images
+    for c_i, category_dir in enumerate(get_all(processed_set_dir)):
+        # load the image and extract the class label
+        # our images were named as labels.image_number.format
+        label = curname(category_dir)
+        for i_i, image_path in enumerate(get_all(category_dir)):
+            image = cv2.imread(image_path)
+
+            # extract raw pixel intensity "features"
+            # followed by a color histogram to characterize the color distribution of the pixels
+            # in the image
+            pixels = image_to_feature_vector(image)
+            hist = extract_color_histogram(image)
+
+            # add the messages we got to the raw images, features, and labels matricies
+            raw_images.append(pixels)
+            features.append(hist)
+            labels.append(label)
+
+            n = len(get_all(category_dir))
+            if i_i > 0 and ((i_i + 1) % 200 == 0 or i_i == n - 1):
+                print("[INFO] processed {}/{}".format(i_i + 1, n))
+        print("[INFO] `{}` done.({}/{})".format(label, c_i + 1, len(get_all(processed_set_dir))))
+
+    raw_images = np.array(raw_images)
+    features = np.array(features)
+    labels = np.array(labels)
+
+    print("[INFO] pixels matrix: {:.2f}MB".format(
+        raw_images.nbytes / (1024 * 1000.0)))
+    print("[INFO] features matrix: {:.2f}MB".format(
+        features.nbytes / (1024 * 1000.0)))
+
+    return raw_images, features, labels
+
+
 def _test():
-    # print(get_set('0001').shape)
-    # print(get_flag('0001').shape)
-    # print(tool.dir_util.origin_sync_dirname)
+    pass
     # generate_sync_txt()
     # copy_to_process_set()
-    split_by_copy()
+    # split_by_copy()
 
 
 if __name__ == '__main__':
