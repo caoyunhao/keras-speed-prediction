@@ -14,7 +14,6 @@ from keras import backend as K, Input, Model, Sequential
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras.layers import Dense, Dropout, Flatten, Conv2D, Activation, MaxPooling2D
 from keras.optimizers import SGD
-from keras.preprocessing.image import ImageDataGenerator
 
 import config
 import tool

@@ -10,8 +10,8 @@ __author__ = 'Yunhao Cao'
 path_join = os.path.join
 
 # Train config
-batch_size = 12
-epochs = 10
+batch_size = 120
+epochs = 20
 
 ORIGIN_DATA_DIR = ''
 
@@ -26,13 +26,21 @@ TRAINSET_DIR = path_join(PROJECT_DATASET, 'train_set')
 VALIDATION_DIR = path_join(PROJECT_DATASET, 'validation_set')
 TEST_DIR = path_join(PROJECT_DATASET, 'test_set')
 
+SAVED_MODEL_DIR = path_join(PROJECT_SRC, 'saved_model')
+
 # Train old model.(selected model)
-USE_SELECTED_MODEL = True
-SELECTED_MODEL_PATH = path_join(PROJECT_SRC, 'saved_model', '20180422_145130', 'model.h5')
+USE_SELECTED_MODEL = False
+
+SELECTED_MODEL_TIME = '20180510_141941'
+SELECTED_WEIGHT = 'weights.20-0.863700788228.hdf5'
+
+SELECTED_MODEL_DIR = path_join(SAVED_MODEL_DIR, SELECTED_MODEL_TIME)
+SELECTED_MODEL_JSON = path_join(SELECTED_MODEL_DIR, 'model.json')
+SELECTED_MODEL_PATH = path_join(SELECTED_MODEL_DIR, 'model.h5')
 
 # server path config
-MODEL_PATH = path_join(PROJECT_SRC, 'saved_model', '20180422_145130', 'model.h5')
-WEIGHT_PATH = path_join(PROJECT_SRC, 'saved_model', '20180422_145130', 'weights.20-0.324324325073.hdf5')
+MODEL_PATH = SELECTED_MODEL_PATH
+WEIGHT_PATH = path_join(SELECTED_MODEL_DIR, SELECTED_WEIGHT)
 STATIC_PATH = path_join(PROJECT_SRC, 'static')
 
 LV_LIST = [
