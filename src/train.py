@@ -3,12 +3,9 @@
 # @Time    : 2018/4/5 11:31
 # @Author  : Yunhao Cao
 # @File    : train.py
-import codecs
-import json
 import os
 import time
 
-import numpy as np
 import tensorflow as tf
 from keras import backend as K, Input, Model, Sequential
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
@@ -44,6 +41,7 @@ test_model = tool.test_model
 image_generator = tool.image_generator
 save_history = tool.save_history
 save_model = tool.save_model
+json2linegraph = tool.json2linegraph
 
 print("batch_size         :", selected_model_path)
 print("epochs             :", selected_model_path)
@@ -60,6 +58,7 @@ saved_path = os.path.join('.', 'saved_model', start_time)
 model_name = os.path.join(saved_path, 'model.h5')
 model_json = os.path.join(saved_path, 'model.json')
 history_name = os.path.join(saved_path, 'history.json')
+linegraph_name = os.path.join(saved_path, 'history.png')
 
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
@@ -215,6 +214,8 @@ def _main():
 
     save_history(history, history_name)
     save_model(model, model_name, model_json)
+
+    json2linegraph(history_name, linegraph_name)
 
     test_model(model)
 

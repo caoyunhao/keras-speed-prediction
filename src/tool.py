@@ -13,6 +13,7 @@ import numpy as np
 import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import CustomObjectScope
+import matplotlib.pyplot as plt
 
 import config
 
@@ -190,14 +191,16 @@ def test_model(model):
     print('Test accuracy:', score[1])
 
 
-def history2csv(model_dir):
-    import json
+def jsonfile(path, encoding='utf8'):
+    with codecs.open(path, 'r', encoding) as f:
+        return json.load(f)
 
+
+def history2csv(model_dir):
     history_json = compare_path(model_dir, 'history.json')
     history_csv = compare_path(model_dir, 'history.csv')
 
-    with codecs.open(history_json, 'r', 'utf8') as f:
-        obj = json.load(f)
+    obj = jsonfile(history_json)
 
     def item(k):
         return ','.join([k, ] + list(map(str, obj[k])))
@@ -216,7 +219,49 @@ def history2csv(model_dir):
         f.writelines(line_all)
 
 
+def linegraph(data, save_path=None):
+    colors = [
+        '#bd413b',
+        'green',
+        '#466170',
+        '#418dc2'
+    ]
+    # plt.title('broadcast(b) vs join(r)')
+    plt.xlabel('epochs')
+
+    x = range(1, epochs + 1)
+
+    def divide_equally(l, n):
+        return list(map(lambda xxx: xxx * l / n, range(0, n + 1)))
+
+    y = divide_equally(1, 5)
+
+    for i, label in enumerate(sorted(data.keys())):
+        plt.plot(x, data[label], colors[i], label=label)
+
+    plt.xticks(x, rotation=0)
+    plt.yticks(y, rotation=0)
+
+    plt.legend()
+
+    if save_path:
+        plt.savefig(save_path)
+        plt.close()
+
+    else:
+        plt.show()
+
+
+def json2linegraph(path, save_path):
+    _obj = jsonfile(path)
+    del _obj['lr']
+    linegraph(_obj, save_path)
+
+
 if __name__ == '__main__':
     # test_model(load_model(config.SELECTED_MODEL_PATH))
     # save_model_json(load_model(config.SELECTED_MODEL_PATH), config.SELECTED_MODEL_JSON)
-    history2csv(config.SELECTED_MODEL_DIR)
+    # history2csv(config.SELECTED_MODEL_DIR)
+    for _dir in get_all(config.SAVED_MODEL_DIR):
+        json2linegraph(compare_path(_dir, 'history.json'),
+                       compare_path(_dir, 'history.png'))
