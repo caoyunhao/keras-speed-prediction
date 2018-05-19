@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2018/5/18 18:01
 # @Author  : Yunhao Cao
+import os
+import time
+
 from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
@@ -9,6 +12,10 @@ from sklearn.svm import SVC
 import train_set
 
 __author__ = 'Yunhao Cao'
+
+start_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(int(time.time())))
+saved_path = os.path.join('.', 'saved_model', start_time)
+model_name = os.path.join(saved_path, '1.model')
 
 # External function
 load_data = train_set.load_data
@@ -37,7 +44,7 @@ if __name__ == '__main__':
     model.fit(trainRI, trainRL)
     print('[INFO] Train done.')
 
-    joblib.dump(model, 'lr.model')
+    joblib.dump(model, model_name)
     print('[INFO] Save done.')
 
     acc = model.score(testRI, testRL)

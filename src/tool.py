@@ -4,6 +4,7 @@
 # @Author  : Yunhao Cao
 # @File    : tool.py
 import codecs
+import json
 import os
 
 import cv2
@@ -134,6 +135,18 @@ def ArrayCut(array, out_shape, mode=5):
         x_end = None
 
     return array[y_start:y_end, x_start: x_end]
+
+
+def save_history(history, history_name):
+    with codecs.open(history_name, 'wb', 'utf8') as fp:
+        json.dump(dict((k, np.array(v).tolist()) for k, v in history.history.items()), fp)
+
+
+def save_model(model, model_name, model_json=None):
+    model.save(model_name)
+    if model_json:
+        with codecs.open(model_json, 'wb', 'utf8') as fp:
+            fp.write(model.to_json())
 
 
 def image_generator(path):

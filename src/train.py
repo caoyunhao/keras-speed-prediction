@@ -32,15 +32,18 @@ selected_model_path = config.SELECTED_MODEL_PATH
 TRAINSET_DIR = config.TRAINSET_DIR
 VALIDATION_DIR = config.VALIDATION_DIR
 # shape config
-TRAIN_SHAPE = config.TRAIN_SHAPE
 num_classes = config.NUM_OF_LEVEL
 classes = config.CLASSES
 
+img_width = config.IMAGE_WIDTH
+img_height = config.IMAGE_HEIGHT
+
+# External function
 load_model = tool.load_model
 test_model = tool.test_model
 image_generator = tool.image_generator
-
-img_width, img_height = TRAIN_SHAPE[:2]
+save_history = tool.save_history
+save_model = tool.save_model
 
 print("batch_size         :", selected_model_path)
 print("epochs             :", selected_model_path)
@@ -53,6 +56,7 @@ time.sleep(5)
 # output config
 start_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(int(time.time())))
 saved_path = os.path.join('.', 'saved_model', start_time)
+
 model_name = os.path.join(saved_path, 'model.h5')
 model_json = os.path.join(saved_path, 'model.json')
 history_name = os.path.join(saved_path, 'history.json')
@@ -185,31 +189,11 @@ def get_model():
         return model_v3()
 
 
-def save_history(history):
-    with codecs.open(history_name, 'wb', 'utf8') as fp:
-        json.dump(dict((k, np.array(v).tolist()) for k, v in history.history.items()), fp)
-
-
-def save_model(model):
-    model.save(model_name)
-    with codecs.open(model_json, 'wb', 'utf8') as fp:
-        fp.write(model.to_json())
-
-
-# #########################
-# Train set data generator
-def data_generator():
-    """
-    :return: (x, y) Train and validation set data generator
-    """
-    return image_generator(TRAINSET_DIR), image_generator(VALIDATION_DIR)
-
-
 def _main():
     os.makedirs(saved_path)
     model = get_model()
 
-    train_generator, validation_generator = data_generator()
+    train_generator, validation_generator = image_generator(TRAINSET_DIR), image_generator(VALIDATION_DIR)
 
     checkpoint = ModelCheckpoint(
         filepath=os.path.join(saved_path, "weights.{epoch:02d}-{val_acc:.12f}.hdf5"),
@@ -229,10 +213,8 @@ def _main():
         callbacks=[checkpoint, lr_plateau],
     )
 
-    with codecs.open(history_name, 'wb', 'utf8') as fp:
-        json.dump(dict((k, np.array(v).tolist()) for k, v in history.history.items()), fp)
-
-    model.save(model_name)
+    save_history(history, history_name)
+    save_model(model, model_name, model_json)
 
     test_model(model)
 
